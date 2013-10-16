@@ -179,6 +179,9 @@ _mp.convertToString = function(VariableToString){
 		case Number :
 			string += VariableToString;
 		break; 
+		case Boolean:
+			string += VariableToString;
+		break;
 	}
 	return string;
 }
@@ -296,6 +299,13 @@ _mp.create.navigation = function(){
 	html += '<option value="TargetPlace">Очистить места</option>';
 	html += '<option value="TargetChuzzle">Уничтожить ящик</option>';	
 	html += '</select>';
+	
+	//stages
+	html += '<div> Stages:';
+	html += '<div id="stages">'
+	html += '</div>';
+	html += '</div>';
+	
 
 	html += '<ul class="Menu">';
 	html += '<li class="MenuItem"><span class="MenuLabel">Add Row:</span></li>';
@@ -389,6 +399,19 @@ _mp.create.StartPopup = function(){
 	return html;
 };
 
+_mp.create.StageTags = function(stage) {
+	var id = "stage"+stage.Id;
+	var html = '<hr><div id="stage'+stage.Id+'">';
+	html += '<input type="number" name="id" value='+stage.Id+'>Id</input>';
+	html += '<input id='+id+'NS'+' onblur="_mp.editLevel.nextStageChanged('+stage.Id+','+id+'NS'+')" type="number" name="nextStage" value='+stage.NextStage+'>NextStage</input>';
+	html += '<input id='+id+'MinY'+' onblur="_mp.editLevel.minYChanged('+stage.Id+','+id+'MinY'+')" type="number" name="minY" value='+stage.MinY+'>MinY</input>';
+	html += '<input id='+id+'MaxY'+' onblur="_mp.editLevel.maxYChanged('+stage.Id+','+id+'MaxY'+')" type="number" name="maxY" value='+stage.MaxY+'>MaxY</input>';
+	html += '<input type="checkbox" '+(stage.Condition.WinOnComplete?' checked ': "")+' name="winOnComplete" value='+stage.Condition.WinOnComplete+'>WinOnComplete</input>';
+	html += '<input type="checkbox" '+(stage.Condition.IsScore?' checked ': "")+' name="isScore" value='+stage.Condition.IsScore+'>IsScore</input>';
+	html += '<input id='+id+'Target'+' onblur="_mp.editLevel.targetChanged('+stage.Id+','+id+'Target'+')"  type="number" name="target" value='+stage.Condition.Target+'>Target</input>';
+	html += '<button onclick="_mp.editLevel.removeStage('+stage.Id+')">x</button></div>';
+	return html;
+}
 // StartPopup ---------------------------------------------------------------------------------------------------------------------------
 
 _mp.startPopup = {};
@@ -449,8 +472,7 @@ _mp.project.getGameMode = function(mode) {
 	}
 	return gameMode;
 }
-_mp.project.addStage = function(id, minY, maxY, nextStage)
-{
+_mp.project.addStage = function(id, minY, maxY, nextStage){
 	var stage = {
 		Id : id,
 		MinY : minY,
@@ -604,6 +626,14 @@ _mp.canvas.drawlevel = function(levelIndex){
 		$('#targetScore').val(currentLevelObject.gameMode.TargetScore);	
 		$('#targetAmount').val(currentLevelObject.gameMode.Amount);	
 		
+		
+		$('#stages').empty();
+		for (var i = 0; i<currentLevelObject.stages.length; i++)
+		{
+		//	console.log(currentLevelObject.stages[i]);
+			$('#stages').append(_mp.create.StageTags(currentLevelObject.stages[i]));
+		}
+		$('#stages').append('<button onclick="_mp.editLevel.addStage()">add stage</button>');
 	}
 	_mp.projectOrganizer.draw();
 }
@@ -790,13 +820,11 @@ _mp.editLevel.addRow = function(side){
 		break;
 	}
 }
-
 _mp.editLevel.changenumberOfColors = function(numberOfColors) {
 
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
 	_mp.currentProject.levelArray[_mp.currentLevelIndex].numberOfColors = parseInt(numberOfColors);
 }
-
 _mp.editLevel.changeGameMode = function(numberOfColors) {
 
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
@@ -862,19 +890,16 @@ _mp.editLevel.turnsChanged = function(turns){
 	
 	_mp.currentProject.levelArray[_mp.currentLevelIndex].gameMode.Turns = parseInt(turns);	
 }
-
 _mp.editLevel.targetScoreChanged = function(targetScore){
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
 	
 	_mp.currentProject.levelArray[_mp.currentLevelIndex].gameMode.TargetScore = parseInt(targetScore);	
 }
-
 _mp.editLevel.targetAmountChanged = function(targetAmount){
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
 	
 	_mp.currentProject.levelArray[_mp.currentLevelIndex].gameMode.Amount = parseInt(targetAmount);	
 }
-
 _mp.editLevel.returnEmptyRow = function (){
 	var emptyRowArray = [];
 	var tempWidth = _mp.currentProject.levelArray[_mp.currentLevelIndex].width;
@@ -885,7 +910,6 @@ _mp.editLevel.returnEmptyRow = function (){
 	
 	return emptyRowArray;
 }
-
 _mp.editLevel.removeRow = function(side){
 	
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
@@ -921,7 +945,6 @@ _mp.editLevel.removeRow = function(side){
 		break;
 	}
 }
-
 _mp.selectTextInsideId = function(SelectTextInsideIdString){
 	if (document.selection) {
 		var range = document.body.createTextRange();
@@ -934,4 +957,85 @@ _mp.selectTextInsideId = function(SelectTextInsideIdString){
 		window.getSelection().addRange(range);
 	}
 }
+_mp.editLevel.removeStage = function(id) {
+	//console.log("clickBitch");
+	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
+	
+	var stages = _mp.currentProject.levelArray[_mp.currentLevelIndex].stages;
+	var index = 0;
+	for(i=0;i<stages.length; i++)
+	{
+		if (stages[i].Id == parseInt(id))
+		{
+			index = i;
+		}
+	}
+	stages.splice(index,1);
+	
+	_mp.canvas.drawlevel(_mp.currentLevelIndex);
+}
 
+_mp.editLevel.addStage = function(id) {
+	//console.log("clickBitch");
+	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
+	
+	var stages = _mp.currentProject.levelArray[_mp.currentLevelIndex].stages;
+	stages.push(_mp.project.addStage(stages.length,0,10,-1));
+	_mp.canvas.drawlevel(_mp.currentLevelIndex);
+}
+
+_mp.editLevel.nextStageChanged = function(id, newNextStage) {
+	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
+	
+	var stages = _mp.currentProject.levelArray[_mp.currentLevelIndex].stages;
+	for(i=0;i<stages.length; i++)
+	{
+		if (stages[i].Id == parseInt(id))
+		{			
+			stages[i].NextStage = parseInt($(newNextStage).val(),10);	
+			console.log(stages[i]);						
+		}
+	}	
+}
+
+_mp.editLevel.minYChanged = function(id, newNextStage) {
+	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
+	
+	var stages = _mp.currentProject.levelArray[_mp.currentLevelIndex].stages;
+	for(i=0;i<stages.length; i++)
+	{
+		if (stages[i].Id == parseInt(id))
+		{			
+			stages[i].MinY = parseInt($(newNextStage).val(),10);		
+			console.log(stages[i]);			
+		}
+	}	
+}
+
+_mp.editLevel.maxYChanged = function(id, newNextStage) {
+	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
+	
+	var stages = _mp.currentProject.levelArray[_mp.currentLevelIndex].stages;
+	for(i=0;i<stages.length; i++)
+	{
+		if (stages[i].Id == parseInt(id))
+		{			
+			stages[i].MaxY = parseInt($(newNextStage).val(),10);		
+			console.log(stages[i]);			
+		}
+	}	
+}
+
+_mp.editLevel.targetChanged = function(id, newNextStage) {
+	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
+	
+	var stages = _mp.currentProject.levelArray[_mp.currentLevelIndex].stages;
+	for(i=0;i<stages.length; i++)
+	{
+		if (stages[i].Id == parseInt(id))
+		{			
+			stages[i].Condition.Target = parseInt($(newNextStage).val());	
+			console.log(stages[i]);			
+		}
+	}	
+}
