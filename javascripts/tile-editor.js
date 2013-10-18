@@ -300,6 +300,11 @@ _mp.create.navigation = function(){
 	html += '<option value="TargetChuzzle">Уничтожить ящик</option>';	
 	html += '</select>';
 	
+	//seed
+	html += '<div>';
+	html += '<input id="seed" onblur="_mp.editLevel.seedChanged()" type="number" value=10>Seed</input>';
+	html += '</div>';
+	
 	//stages
 	html += '<div> Stages:';
 	html += '<div id="stages">'
@@ -501,7 +506,8 @@ _mp.project.addNewLevel = function(){
 		gameMode : _mp.project.getGameMode("TargetScore"),	
 		stages : [ _mp.project.addStage(0, 0, promptResults.TilesHeigh) ],
 		numberOfColors : 6,
-		map : map
+		map : map,
+		seed : 10
 	};
 	_mp.currentProject.levelArray.push(newLevel);
 	_mp.canvas.drawlevel(_mp.currentProject.levelArray.length-1);
@@ -578,6 +584,11 @@ _mp.project.load = function(){
 		{
 			level.stages = [];
 		}
+		
+		if (!level.seed)
+		{
+			level.seed = 10;
+		}
 	}
 	
 	_mp.canvas.clear();
@@ -625,7 +636,7 @@ _mp.canvas.drawlevel = function(levelIndex){
 		$('#turns').val(currentLevelObject.gameMode.Turns);	
 		$('#targetScore').val(currentLevelObject.gameMode.TargetScore);	
 		$('#targetAmount').val(currentLevelObject.gameMode.Amount);	
-		
+		$('#seed').val(currentLevelObject.seed);
 		
 		$('#stages').empty();
 		for (var i = 0; i<currentLevelObject.stages.length; i++)
@@ -983,7 +994,6 @@ _mp.editLevel.addStage = function(id) {
 	stages.push(_mp.project.addStage(stages.length,0,10,-1));
 	_mp.canvas.drawlevel(_mp.currentLevelIndex);
 }
-
 _mp.editLevel.nextStageChanged = function(id, newNextStage) {
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
 	
@@ -997,7 +1007,6 @@ _mp.editLevel.nextStageChanged = function(id, newNextStage) {
 		}
 	}	
 }
-
 _mp.editLevel.minYChanged = function(id, newNextStage) {
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
 	
@@ -1011,7 +1020,6 @@ _mp.editLevel.minYChanged = function(id, newNextStage) {
 		}
 	}	
 }
-
 _mp.editLevel.maxYChanged = function(id, newNextStage) {
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
 	
@@ -1025,7 +1033,6 @@ _mp.editLevel.maxYChanged = function(id, newNextStage) {
 		}
 	}	
 }
-
 _mp.editLevel.targetChanged = function(id, newNextStage) {
 	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
 	
@@ -1038,4 +1045,11 @@ _mp.editLevel.targetChanged = function(id, newNextStage) {
 			console.log(stages[i]);			
 		}
 	}	
+}
+
+_mp.editLevel.seedChanged = function() {
+	if(!_mp.currentProject.levelArray[_mp.currentLevelIndex]) return;
+	
+	_mp.currentProject.levelArray[_mp.currentLevelIndex].seed = parseInt($("#seed").val());;
+	
 }
